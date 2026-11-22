@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HadirKu — Sistem Absensi Cerdas Claymorphism</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5-QRCode Scanner Library untuk Scan Kamera & Gambar QR Langsung -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tone.js untuk efek suara lembut saat sukses -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Poppins"', 'sans-serif'],
+                    },
+                    colors: {
+                        clay: {
+                            bg: '#e8eef7',
+                            surface: '#f2f6fc',
+                            purple: '#8b7cf6',
+                            purpleDark: '#6d5ce8',
+                            mint: '#38d39f',
+                            mintDark: '#24b383',
+                            coral: '#ff7a8a',
+                            coralDark: '#eb5769',
+                            amber: '#ffb84d',
+                            sky: '#56b4f9',
+                            ink: '#2d354c',
+                            muted: '#6e7a99'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Gaya Dasar & Claymorphism Utilities */
+        body {
+            background-color: #e8eef7;
+            background-image: 
+                radial-gradient(at 12% 18%, rgba(139, 124, 246, 0.14) 0px, transparent 50%),
+                radial-gradient(at 88% 12%, rgba(56, 211, 159, 0.14) 0px, transparent 50%),
+                radial-gradient(at 80% 85%, rgba(255, 122, 138, 0.12) 0px, transparent 50%),
+                radial-gradient(at 15% 88%, rgba(86, 180, 249, 0.14) 0px, transparent 50%);
+            color: #2d354c;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Kartu Claymorphism Utama */
+        .clay-card {
+            background: linear-gradient(145deg, #f7faff, #e6edf8);
+            border-radius: 32px;
+            box-shadow: 
+                14px 14px 28px rgba(174, 186, 208, 0.55),
+                -14px -14px 28px rgba(255, 255, 255, 0.92),
+                inset 4px 4px 10px rgba(255, 255, 255, 0.85),
+                inset -4px -4px 10px rgba(190, 202, 222, 0.45);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+        }
+
+        /* Sub-kartu / Panel Dalam */
+        .clay-panel {
+            background: linear-gradient(145deg, #eef3fb, #e1e8f5);
+            border-radius: 24px;
+            box-shadow: 
+                8px 8px 18px rgba(174, 186, 208, 0.45),
+                -8px -8px 18px rgba(255, 255, 255, 0.85),
+                inset 3px 3px 6px rgba(255, 255, 255, 0.8),
+                inset -3px -3px 6px rgba(188, 200, 220, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+        }
+
+        /* Cekungan / Pressed Input Clay */
+        .clay-inset {
+            background: #e3eaf6;
+            border-radius: 20px;
+            box-shadow: 
+                inset 6px 6px 12px rgba(176, 188, 210, 0.6),
+                inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.25s ease;
+        }
+
+        .clay-inset:focus-within {
+            background: #eaf0fa;
+            box-shadow: 
+                inset 4px 4px 10px rgba(139, 124, 246, 0.25),
+                inset -4px -4px 10px rgba(255, 255, 255, 0.95),
+                0 0 0 3px rgba(139, 124, 246, 0.25);
+        }
+
+        /* Tombol Clay Ungu Utama */
+        .clay-btn-purple {
+            background: linear-gradient(145deg, #9789fa, #7866eb);
+            color: #ffffff;
+            border-radius: 22px;
+            box-shadow: 
+                8px 8px 18px rgba(120, 102, 235, 0.38),
+                -6px -6px 14px rgba(255, 255, 255, 0.8),
+                inset 3px 3px 7px rgba(255, 255, 255, 0.45),
+                inset -4px -4px 8px rgba(84, 67, 196, 0.5);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .clay-btn-purple:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 
+                11px 11px 22px rgba(120, 102, 235, 0.45),
+                -7px -7px 16px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.55),
+                inset -4px -4px 8px rgba(84, 67, 196, 0.5);
+        }
+        .clay-btn-purple:active:not(:disabled) {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 
+                inset 5px 5px 10px rgba(84, 67, 196, 0.6),
+                inset -4px -4px 8px rgba(173, 162, 255, 0.5);
+        }
+
+        /* Tombol Clay Mint / Hijau Sukses */
+        .clay-btn-mint {
+            background: linear-gradient(145deg, #43deaa, #28be8b);
+            color: #ffffff;
+            border-radius: 22px;
+            box-shadow: 
+                8px 8px 18px rgba(40, 190, 139, 0.35),
+                -6px -6px 14px rgba(255, 255, 255, 0.8),
+                inset 3px 3px 7px rgba(255, 255, 255, 0.5),
+                inset -4px -4px 8px rgba(22, 148, 105, 0.45);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .clay-btn-mint:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 
+                11px 11px 22px rgba(40, 190, 139, 0.44),
+                -7px -7px 16px rgba(255, 255, 255, 0.9),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.6),
+                inset -4px -4px 8px rgba(22, 148, 105, 0.5);
+        }
+        .clay-btn-mint:active:not(:disabled) {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Tombol Clay Netral / Sekunder */
+        .clay-btn-soft {
+            background: linear-gradient(145deg, #f5f8fe, #e2e9f5);
+            color: #3c4663;
+            border-radius: 20px;
+            box-shadow: 
+                7px 7px 14px rgba(174, 186, 208, 0.5),
+                -7px -7px 14px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.85),
+                inset -2px -2px 5px rgba(185, 197, 218, 0.4);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .clay-btn-soft:hover:not(:disabled) {
+            transform: translateY(-2px);
+            color: #6d5ce8;
+        }
+        .clay-btn-soft:active:not(:disabled) {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 
+                inset 4px 4px 8px rgba(174, 186, 208, 0.55),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Badge Clay */
+        .clay-badge {
+            border-radius: 9999px;
+            box-shadow: 
+                4px 4px 8px rgba(174, 186, 208, 0.4),
+                -4px -4px 8px rgba(255, 255, 255, 0.85),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.75);
+        }
+
+        /* Bingkai QR Code Clay */
+        .qr-clay-frame {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 18px;
+            box-shadow: 
+                10px 10px 22px rgba(168, 180, 204, 0.55),
+                -10px -10px 22px rgba(255, 255, 255, 0.95),
+                inset 3px 3px 8px rgba(235, 241, 252, 0.9),
+                inset -3px -3px 8px rgba(206, 216, 234, 0.5);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Garis Laser Pemindai Animasi pada QR */
+        @keyframes scanLaser {
+            0%, 100% { top: 12%; opacity: 0.35; }
+            50% { top: 84%; opacity: 0.95; }
+        }
+        .scan-line {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 3.5px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, transparent, #8b7cf6, #38d39f, #8b7cf6, transparent);
+            box-shadow: 0 0 12px rgba(139, 124, 246, 0.75);
+            animation: scanLaser 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        /* Animasi Modal Pop-In Bouncy */
+        @keyframes clayModalPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.65) translateY(30px);
+            }
+            65% {
+                opacity: 1;
+                transform: scale(1.04) translateY(-4px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .animate-clay-pop {
+            animation: clayModalPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Animasi Centang 3D Memantul */
+        @keyframes checkBounce {
+            0% { transform: scale(0) rotate(-25deg); opacity: 0; }
+            55% { transform: scale(1.18) rotate(6deg); opacity: 1; }
+            78% { transform: scale(0.92) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .animate-check-3d {
+            animation: checkBounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+        }
+
+        @keyframes strokeDraw {
+            0% { stroke-dashoffset: 60; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .animate-check-stroke {
+            stroke-dasharray: 60;
+            stroke-dashoffset: 60;
+            animation: strokeDraw 0.45s ease-out 0.42s forwards;
+        }
+
+        /* Animasi Baris Tabel Baru */
+        @keyframes rowSlideIn {
+            0% { opacity: 0; transform: translateY(-14px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-row-in {
+            animation: rowSlideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Floating Orbs Dekoratif */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+        .float-orb {
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+
+        /* Custom Scrollbar Lembut */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e3eaf6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1cde2;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9aa9c7;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-clay-purple/20 selection:text-clay-purpleDark">
+
+    <!-- Toast / Notifikasi Melayang (Pengganti alert) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+
+    <!-- Dekorasi Latar Belakang 3D Clay Mengambang -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div class="float-orb absolute -top-12 -left-12 w-56 h-56 rounded-full opacity-60"
+             style="background: radial-gradient(circle at 30% 30%, #d8d2ff, #b3a7f7); box-shadow: inset -8px -8px 20px rgba(109,92,232,0.25), 15px 15px 30px rgba(174,186,208,0.3);"></div>
+        <div class="float-orb absolute top-1/3 -right-16 w-64 h-64 rounded-full opacity-50" style="animation-delay: 2s; background: radial-gradient(circle at 30% 30%, #c6f7e7, #8be5c7); box-shadow: inset -8px -8px 20px rgba(36,179,131,0.2), 15px 15px 30px rgba(174,186,208,0.3);"></div>
+        <div class="float-orb absolute -bottom-16 left-1/4 w-60 h-60 rounded-full opacity-50" style="animation-delay: 4s; background: radial-gradient(circle at 30% 30%, #ffd6dc, #ffa8b4); box-shadow: inset -8px -8px 20px rgba(235,87,105,0.2), 15px 15px 30px rgba(174,186,208,0.3);"></div>
+    </div>
+
+    <!-- Container Utama -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9">
+
+        <!-- Header / Navbar Claymorphism -->
+        <header class="clay-card px-5 sm:px-8 py-4 sm:py-5 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Logo 3D Clay -->
+                <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-white shrink-0"
+                     style="background: linear-gradient(145deg, #988afa, #6d5ce8); box-shadow: 6px 6px 14px rgba(109,92,232,0.35), -4px -4px 10px rgba(255,255,255,0.9), inset 3px 3px 6px rgba(255,255,255,0.5);">
+                    <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M9 12l2 2 4-4" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="font-display font-extrabold text-xl sm:text-2xl tracking-tight text-clay-ink">HadirKu</h1>
+                        <span class="clay-badge px-3 py-0.5 text-xs font-bold text-clay-purpleDark bg-indigo-50/90">Smart QR</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-clay-muted font-medium">Sistem Presensi Dinamis Berbatas Waktu 10 Menit</p>
+                </div>
+            </div>
+
+            <!-- Info Jam Real-time & Statistik Ringkas -->
+            <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                <div class="clay-panel px-4 py-2.5 flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-clay-mint animate-pulse"></span>
+                    <div class="text-left">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-clay-muted">Waktu Server</p>
+                        <p id="live-clock" class="font-display font-bold text-sm text-clay-ink">--:--:-- WIB</p>
+                    </div>
+                </div>
+
+                <div class="clay-panel px-4 py-2.5 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                         style="background: linear-gradient(145deg, #43deaa, #24b383); box-shadow: inset 2px 2px 4px rgba(255,255,255,0.5);">
+                        <span id="header-total-count">0</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-clay-muted">Kehadiran Sesi</p>
+                        <p id="header-total-subtitle" class="font-display font-bold text-sm text-clay-ink">0 / 137 Peserta</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Grid Utama 2 Kolom: Generator QR (Kiri) & Simulasi Scan Peserta (Kanan) -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-7 sm:gap-8 mb-8">
+
+            <!-- KOLOM KIRI: Generator QR Code & Countdown 10 Menit -->
+            <section class="lg:col-span-6 clay-card p-6 sm:p-8 flex flex-col justify-between">
+                <div>
+                    <!-- Header Panel -->
+                    <div class="flex items-start justify-between gap-3 mb-6">
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-clay-purpleDark mb-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z"/></svg>
+                                Panel Penyelenggara / Admin
+                            </span>
+                            <h2 class="font-display font-bold text-xl sm:text-2xl text-clay-ink">Generator QR Absensi</h2>
+                        </div>
+                        <span id="qr-status-pill" class="clay-badge px-3.5 py-1.5 text-xs font-extrabold flex items-center gap-1.5 bg-emerald-50 text-clay-mintDark">
+                            <span class="w-2 h-2 rounded-full bg-clay-mint animate-ping"></span>
+                            SESI AKTIF
+                        </span>
+                    </div>
+
+                    <!-- Pemilih Sesi / Mata Kuliah / Rapat -->
+                    <div class="mb-6">
+                        <label for="session-select" class="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-2 ml-1">
+                            Pilih Sesi Pertemuan / Kegiatan
+                        </label>
+                        <div class="clay-inset px-4 py-3 flex items-center gap-3">
+                            <svg class="w-5 h-5 text-clay-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <select id="session-select" class="w-full bg-transparent font-semibold text-sm sm:text-base text-clay-ink focus:outline-none cursor-pointer">
+                                <option value="IF302 - Pemrograman Web Lanjut">IF302 — Pemrograman Web Lanjut</option>
+                                <option value="Rapat Koordinasi Tim Produk Q4">Rapat Koordinasi Tim Produk Q4</option>
+                                <option value="Shift Pagi — Operasional Layanan">Shift Pagi — Operasional Layanan</option>
+                                <option value="Workshop Desain UI/UX Modern">Workshop Desain UI/UX Modern</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pengaturan Wajib Izin Lokasi GPS (Geolocation) -->
+                    <div class="clay-panel p-4 mb-6 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-white"
+                                 style="background: linear-gradient(145deg, #988afa, #6d5ce8); box-shadow: 4px 4px 10px rgba(109,92,232,0.3), inset 2px 2px 5px rgba(255,255,255,0.5);">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-display font-bold text-xs sm:text-sm text-clay-ink">Wajib Verifikasi Lokasi GPS</p>
+                                <p class="text-[11px] text-clay-muted">Peserta harus mengizinkan akses lokasi perangkat sebelum absen</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" id="require-location-toggle" checked onchange="toggleLocationRequirement()" class="sr-only peer">
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-[22px] after:w-[22px] after:transition-all peer-checked:bg-clay-mint shadow-inner"></div>
+                        </label>
+                    </div>
+
+                    <!-- Area Tampilan QR Code & Countdown Timer -->
+                    <div class="clay-panel p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-around gap-6 mb-6">
+                        
+                        <!-- Bingkai QR Code Claymorphism -->
+                        <div class="relative flex flex-col items-center">
+                            <div id="qr-wrapper" class="qr-clay-frame flex items-center justify-center">
+                                <!-- Container QRCode.js -->
+                                <div id="qrcode-canvas" class="transition-all duration-500"></div>
+                                <!-- Garis Laser Pemindai -->
+                                <div id="qr-scan-line" class="scan-line"></div>
+
+                                <!-- Overlay Ketika Waktu 10 Menit Habis (Kedaluwarsa) -->
+                                <div id="qr-expired-overlay" class="hidden absolute inset-0 rounded-[26px] bg-slate-900/75 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center text-white z-10">
+                                    <div class="w-12 h-12 rounded-2xl bg-clay-coral flex items-center justify-center mb-2 shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <p class="font-display font-bold text-sm">Barcode Kedaluwarsa</p>
+                                    <p class="text-[11px] text-slate-200 mt-0.5">Batas waktu 10 menit berakhir</p>
+                                </div>
+                            </div>
+
+                            <!-- Token Kode Sesi yang Bisa Disalin -->
+                            <button onclick="copySessionCode()" type="button" title="Klik untuk menyalin kode sesi"
+                                    class="mt-3.5 clay-btn-soft px-3.5 py-1.5 text-xs font-bold flex items-center gap-2">
+                                <span class="text-clay-muted">Kode:</span>
+                                <span id="session-code-display" class="font-mono font-extrabold text-clay-purpleDark tracking-wider">HDR-8492</span>
+                                <svg class="w-3.5 h-3.5 text-clay-muted" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Indikator Countdown Timer 10 Menit -->
+                        <div class="flex flex-col items-center text-center">
+                            <p class="text-xs font-bold uppercase tracking-wider text-clay-muted mb-2">Sisa Waktu Berlaku</p>
+                            
+                            <!-- Circular Progress Ring Clay -->
+                            <div class="relative w-36 h-36 flex items-center justify-center">
+                                <svg class="w-full h-full -rotate-90 transform" viewBox="0 0 120 120">
+                                    <!-- Track Lingkaran -->
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#d5dfef" stroke-width="10" />
+                                    <!-- Progress Lingkaran -->
+                                    <circle id="timer-ring" cx="60" cy="60" r="50" fill="none" stroke="#8b7cf6" stroke-width="10"
+                                            stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="0"
+                                            class="transition-all duration-700 ease-linear" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span id="timer-text" class="font-display font-extrabold text-2xl sm:text-3xl text-clay-ink tracking-tight">10:00</span>
+                                    <span id="timer-subtext" class="text-[11px] font-semibold text-clay-muted">Menit : Detik</span>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar Linear Pendukung -->
+                            <div class="w-40 mt-3">
+                                <div class="w-full h-2.5 clay-inset rounded-full overflow-hidden p-0.5">
+                                    <div id="timer-bar" class="h-full rounded-full bg-gradient-to-r from-clay-purple to-clay-mint transition-all duration-700" style="width: 100%"></div>
+                                </div>
+                                <p id="expiry-clock-info" class="text-[11px] text-clay-muted font-medium mt-1.5">Berakhir pukul --:-- WIB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Generate QR Baru -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="btn-generate-qr" onclick="generateNewQR(true)" type="button"
+                            class="clay-btn-purple w-full py-3.5 px-6 font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Generate QR Absensi Baru (10 Menit)</span>
+                    </button>
+                    
+                    <!-- Tombol Demo Uji Kedaluwarsa Cepat -->
+                    <button onclick="simulateFastExpire()" type="button" title="Uji kondisi saat waktu 10 menit hampir habis (5 detik tersisa)"
+                            class="clay-btn-soft py-3.5 px-4 font-bold text-xs text-clay-muted hover:text-clay-coralDark flex items-center justify-center gap-1.5 shrink-0 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Uji 5 Detik</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- KOLOM KANAN: Simulasi Scan & Form Absensi Peserta -->
+            <section class="lg:col-span-6 clay-card p-6 sm:p-8 flex flex-col justify-between">
+                <div>
+                    <!-- Header Panel Peserta -->
+                    <div class="flex items-start justify-between gap-3 mb-6">
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-clay-mintDark mb-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                                Portal Peserta / Mahasiswa / Karyawan
+                            </span>
+                            <h2 class="font-display font-bold text-xl sm:text-2xl text-clay-ink">Simulasi Scan & Konfirmasi</h2>
+                        </div>
+                        <span class="clay-badge px-3 py-1.5 text-xs font-bold text-clay-ink bg-white/80">
+                            Mode Interaktif
+                        </span>
+                    </div>
+
+                    <!-- Banner Koneksi & Pemindai QR Langsung (Kamera / Upload Gambar / Link QR) -->
+                    <div id="qr-connection-panel" class="clay-panel p-4 mb-5 space-y-3 border border-indigo-200/70">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span id="qr-conn-dot" class="w-2.5 h-2.5 rounded-full bg-clay-mint animate-ping"></span>
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-clay-ink">Status Koneksi Barcode QR</span>
+                            </div>
+                            <span id="qr-conn-badge" class="clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-clay-mintDark">
+                                Terhubung Otomatis
+                            </span>
+                        </div>
+
+                        <p id="qr-conn-desc" class="text-xs text-clay-muted leading-relaxed">
+                            Terhubung ke sesi QR aktif (<strong id="conn-token-label" class="font-mono text-clay-purpleDark">HDR-8492</strong>). Anda juga dapat memindai QR langsung lewat kamera atau upload gambar QR:
+                        </p>
+
+                        <!-- Tombol Scan Kamera Langsung & Upload Gambar QR -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="btn-toggle-camera" onclick="toggleCameraScanner()"
+                                    class="clay-btn-purple px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span id="btn-camera-text">Buka Kamera Scan QR</span>
+                            </button>
+
+                            <label for="qr-file-input"
+                                   class="clay-btn-soft px-3.5 py-2 text-xs font-extrabold text-clay-purpleDark flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>Upload Gambar QR</span>
+                            </label>
+                            <input type="file" id="qr-file-input" accept="image/*" onchange="handleQrImageUpload(event)" class="hidden">
+
+                            <button type="button" onclick="openQrLinkInNewTab()" title="Buka tautan hasil scan QR di tab baru untuk uji koneksi lintas-tab"
+                                    class="clay-btn-soft px-3 py-2 text-[11px] font-bold text-clay-muted hover:text-clay-ink flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                <span>Uji Link QR</span>
+                            </button>
+                        </div>
+
+                        <!-- Container Kamera Live Scanner -->
+                        <div id="camera-scanner-wrapper" class="hidden pt-2">
+                            <div class="clay-inset p-2 rounded-2xl overflow-hidden bg-slate-900">
+                                <div id="qr-reader" class="w-full rounded-xl overflow-hidden"></div>
+                            </div>
+                            <p class="text-[11px] text-clay-muted text-center mt-1.5">Arahkan kamera ke QR Code di Panel Admin untuk menghubungkan sesi secara otomatis.</p>
+                        </div>
+                        <div id="qr-file-scanner-hidden" class="hidden"></div>
+                    </div>
+
+                    <!-- Banner Info Simulasi -->
+                    <div class="clay-panel p-4 mb-5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-white"
+                                 style="background: linear-gradient(145deg, #6cc1ff, #429ee6); box-shadow: 4px 4px 10px rgba(66,158,230,0.3), inset 2px 2px 5px rgba(255,255,255,0.5);">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <p class="text-xs text-clay-muted leading-relaxed">
+                                Database <strong class="text-clay-ink">137 Peserta (NIM 1–143)</strong> aktif. Ketik NIM atau Nama untuk pencarian otomatis.
+                            </p>
+                        </div>
+                        <button type="button" onclick="pickRandomParticipant()"
+                                class="clay-btn-soft px-3 py-2 text-xs font-extrabold text-clay-purpleDark shrink-0 flex items-center gap-1.5 cursor-pointer"
+                                title="Pilih peserta acak yang belum absen">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            <span>Acak</span>
+                        </button>
+                    </div>
+
+                    <!-- Form Data Peserta dengan Pencarian Cepat / Autocomplete -->
+                    <form id="attendance-form" onsubmit="handleAttendanceSubmit(event)" class="space-y-4">
+                        <div class="relative">
+                            <label for="quick-search-participant" class="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-1.5 ml-1">
+                                Cari Cepat Peserta (Ketik NIM 1–143 atau Nama)
+                            </label>
+                            <div class="clay-inset px-4 py-3 flex items-center gap-3">
+                                <svg class="w-5 h-5 text-clay-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input type="text" id="quick-search-participant" autocomplete="off"
+                                       oninput="handleParticipantAutocomplete(this.value)"
+                                       onfocus="handleParticipantAutocomplete(this.value)"
+                                       placeholder="Misal: ketik '1' atau 'Leni Marizka'..."
+                                       class="w-full bg-transparent text-sm font-semibold text-clay-ink placeholder:text-slate-400 focus:outline-none">
+                                <button type="button" id="clear-search-btn" onclick="clearParticipantSearch()" class="hidden text-xs font-bold text-clay-muted hover:text-clay-coralDark">
+                                    Hapus
+                                </button>
+                            </div>
+
+                            <!-- Dropdown Hasil Autocomplete Claymorphism -->
+                            <div id="autocomplete-dropdown"
+                                 class="hidden absolute left-0 right-0 mt-2 max-h-56 overflow-y-auto z-30 rounded-2xl p-2 space-y-1"
+                                 style="background: #f4f7fd; box-shadow: 10px 14px 28px rgba(154, 168, 194, 0.65), -6px -6px 16px rgba(255, 255, 255, 0.95); border: 1.5px solid rgba(255,255,255,0.85);">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                            <div class="sm:col-span-4">
+                                <label for="input-id" class="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-1.5 ml-1">
+                                    NIM
+                                </label>
+                                <div class="clay-inset px-3.5 py-3 flex items-center gap-2">
+                                    <span class="text-xs font-extrabold text-clay-mintDark">#</span>
+                                    <input type="text" id="input-id" required oninput="syncNameByNim(this.value)" placeholder="1 - 143"
+                                           class="w-full bg-transparent text-sm font-extrabold text-clay-ink placeholder:text-slate-400 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-8">
+                                <label for="input-name" class="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-1.5 ml-1">
+                                    Nama Lengkap Peserta
+                                </label>
+                                <div class="clay-inset px-3.5 py-3 flex items-center gap-2.5">
+                                    <svg class="w-4 h-4 text-clay-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <input type="text" id="input-name" required placeholder="Otomatis terisi atau ketik manual"
+                                           class="w-full bg-transparent text-sm font-semibold text-clay-ink placeholder:text-slate-400 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="input-code" class="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-1.5 ml-1">
+                                Kode Sesi QR Aktif (Validasi 10 Menit)
+                            </label>
+                            <div class="clay-inset px-4 py-3 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 w-full">
+                                    <svg class="w-4 h-4 text-clay-coral shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                    </svg>
+                                    <input type="text" id="input-code" required placeholder="HDR-XXXX"
+                                           class="w-full bg-transparent font-mono text-sm font-extrabold uppercase text-clay-purpleDark placeholder:text-slate-400 focus:outline-none">
+                                </div>
+                                <span id="nim-match-indicator" class="hidden shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-clay-mintDark">
+                                    Terdaftar
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Panel Verifikasi Izin Lokasi GPS Peserta -->
+                        <div id="participant-location-card" class="clay-panel p-4 space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span id="location-status-dot" class="w-2.5 h-2.5 rounded-full bg-clay-amber animate-pulse"></span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-clay-ink">Izin Lokasi GPS</span>
+                                </div>
+                                <span id="location-badge" class="clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-amber-50 text-amber-700">
+                                    Belum Diizinkan
+                                </span>
+                            </div>
+
+                            <p id="location-detail-text" class="text-xs text-clay-muted leading-relaxed">
+                                Klik tombol di bawah untuk mengizinkan browser mengakses koordinat lokasi Anda saat ini.
+                            </p>
+
+                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                <button type="button" id="btn-request-location" onclick="requestUserLocation()"
+                                        class="clay-btn-soft px-3.5 py-2 text-xs font-extrabold text-clay-purpleDark flex items-center gap-1.5 cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>Izinkan & Deteksi Lokasi</span>
+                                </button>
+                                <button type="button" onclick="simulateMockLocation()" title="Gunakan koordinat simulasi jika perangkat tanpa GPS"
+                                        class="clay-btn-soft px-3 py-2 text-[11px] font-bold text-clay-muted hover:text-clay-ink cursor-pointer">
+                                    Simulasi GPS
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tombol Eksekusi Absensi -->
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button type="submit" form="attendance-form" id="btn-submit-attendance"
+                            class="clay-btn-mint w-full py-3.5 px-6 font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Konfirmasi & Kirim Absensi</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- BAGIAN BAWAH: Log & Rekapitulasi Kehadiran (137 Peserta) -->
+        <section class="clay-card p-6 sm:p-8">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <h3 class="font-display font-bold text-xl sm:text-2xl text-clay-ink">Rekapitulasi Kehadiran</h3>
+                        <span id="badge-count" class="clay-badge px-3.5 py-1 text-xs font-extrabold text-clay-mintDark bg-emerald-50">0 / 137 Hadir (0%)</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-clay-muted mt-1">Pantau peserta yang sudah memindai QR maupun seluruh daftar 137 peserta</p>
+                </div>
+
+                <!-- Kontrol Tab Filter, Pencarian & Export CSV -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Tab Filter -->
+                    <div class="clay-inset p-1.5 flex items-center gap-1">
+                        <button type="button" id="tab-present" onclick="switchRekapTab('present')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-white text-clay-purpleDark shadow-sm cursor-pointer">
+                            Sudah Hadir (<span id="tab-present-count">0</span>)
+                        </button>
+                        <button type="button" id="tab-all" onclick="switchRekapTab('all')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-clay-muted hover:text-clay-ink transition-all cursor-pointer">
+                            Semua Peserta (137)
+                        </button>
+                    </div>
+
+                    <!-- Pencarian Peserta -->
+                    <div class="clay-inset px-3.5 py-2 flex items-center gap-2 w-full sm:w-56">
+                        <svg class="w-4 h-4 text-clay-muted shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" id="search-log" oninput="renderAttendanceList()" placeholder="Cari NIM atau nama..."
+                               class="w-full bg-transparent text-xs font-semibold text-clay-ink placeholder:text-slate-400 focus:outline-none">
+                    </div>
+
+                    <!-- Tombol Export CSV -->
+                    <button type="button" onclick="exportAttendanceCSV()"
+                            class="clay-btn-soft px-4 py-2.5 text-xs font-extrabold text-clay-ink flex items-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4 text-clay-mintDark" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Export CSV</span>
+                    </button>
+
+                    <!-- Tombol Reset Semua Kehadiran Sesi -->
+                    <button type="button" id="btn-reset-all" onclick="openDeleteConfirmModal('ALL')"
+                            class="clay-btn-soft px-3.5 py-2.5 text-xs font-extrabold text-clay-coralDark flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>Reset Sesi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bar Progres Kehadiran Keseluruhan -->
+            <div class="clay-panel p-4 mb-6">
+                <div class="flex items-center justify-between text-xs font-bold mb-2">
+                    <span class="text-clay-muted">Persentase Kehadiran Sesi Aktif</span>
+                    <span id="attendance-percentage-label" class="text-clay-purpleDark font-extrabold">0% (0 dari 137 Peserta)</span>
+                </div>
+                <div class="w-full h-3 clay-inset rounded-full overflow-hidden p-0.5">
+                    <div id="attendance-progress-bar" class="h-full rounded-full bg-gradient-to-r from-clay-purple via-clay-sky to-clay-mint transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Daftar Kartu Kehadiran Claymorphism -->
+            <div id="attendance-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[540px] overflow-y-auto pr-1">
+                <!-- Dirender secara dinamis via JavaScript -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL ANIMASI ABSENSI BERHASIL (CLAYMORPHISM + CONFETTI + CHECKMARK 3D) -->
+    <div id="success-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="clay-card max-w-md w-full p-7 sm:p-8 text-center relative animate-clay-pop">
+            
+            <!-- Tombol Tutup Pojok Kanan -->
+            <button onclick="closeSuccessModal()" type="button" aria-label="Tutup"
+                    class="clay-btn-soft w-10 h-10 rounded-full flex items-center justify-center absolute top-5 right-5 text-clay-muted hover:text-clay-ink cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Ikon Centang 3D Claymorphism Memantul -->
+            <div class="mx-auto mb-5 w-24 h-24 rounded-[30px] flex items-center justify-center animate-check-3d"
+                 style="background: linear-gradient(145deg, #49e6b2, #22b583); box-shadow: 12px 12px 24px rgba(34, 181, 131, 0.38), -10px -10px 20px rgba(255, 255, 255, 0.9), inset 4px 4px 10px rgba(255, 255, 255, 0.6), inset -5px -5px 12px rgba(17, 138, 96, 0.5);">
+                <svg class="w-13 h-13 text-white" fill="none" stroke="currentColor" stroke-width="3.5" viewBox="0 0 24 24">
+                    <path class="animate-check-stroke" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <span class="clay-badge inline-block px-3.5 py-1 text-xs font-extrabold text-clay-mintDark bg-emerald-50 mb-2">
+                VERIFIKASI BERHASIL
+            </span>
+            <h3 class="font-display font-extrabold text-2xl text-clay-ink mb-1">Absensi Tercatat!</h3>
+            <p class="text-xs sm:text-sm text-clay-muted mb-6">Kehadiran Anda telah terverifikasi pada sistem secara real-time.</p>
+
+            <!-- Kartu Bukti Kehadiran Digital -->
+            <div class="clay-panel p-5 text-left space-y-3 mb-6">
+                <div class="flex justify-between items-center border-b border-slate-200/70 pb-2.5">
+                    <span class="text-xs font-semibold text-clay-muted">Nama Peserta</span>
+                    <span id="receipt-name" class="text-sm font-extrabold text-clay-ink">-</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-200/70 pb-2.5">
+                    <span class="text-xs font-semibold text-clay-muted">NIM / ID</span>
+                    <span id="receipt-id" class="font-mono text-sm font-bold text-clay-purpleDark">-</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-200/70 pb-2.5">
+                    <span class="text-xs font-semibold text-clay-muted">Kegiatan / Sesi</span>
+                    <span id="receipt-session" class="text-xs font-bold text-clay-ink text-right max-w-[190px] truncate">-</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-200/70 pb-2.5">
+                    <span class="text-xs font-semibold text-clay-muted">Waktu Scan</span>
+                    <span id="receipt-time" class="text-xs font-bold text-clay-ink">-</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-200/70 pb-2.5">
+                    <span class="text-xs font-semibold text-clay-muted">Lokasi Terdeteksi</span>
+                    <span id="receipt-location" class="font-mono text-[11px] font-bold text-clay-ink text-right max-w-[195px] truncate">-</span>
+                </div>
+                <div class="flex justify-between items-center pt-0.5">
+                    <span class="text-xs font-semibold text-clay-muted">Status Kehadiran</span>
+                    <span class="clay-badge px-3 py-1 text-[11px] font-extrabold text-clay-mintDark bg-emerald-100/80 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-clay-mint"></span>
+                        Hadir Tepat Waktu
+                    </span>
+                </div>
+            </div>
+
+            <button onclick="closeSuccessModal()" type="button"
+                    class="clay-btn-purple w-full py-3.5 px-6 font-display font-bold text-sm sm:text-base cursor-pointer">
+                Selesai & Kembali
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS STATUS KEHADIRAN (PENGGANTI confirm() BROWSER) -->
+    <div id="delete-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="clay-card max-w-sm w-full p-6 sm:p-7 text-center relative animate-clay-pop">
+            <div class="mx-auto mb-4 w-16 h-16 rounded-2xl flex items-center justify-center text-white"
+                 style="background: linear-gradient(145deg, #ff8c9b, #eb5769); box-shadow: 8px 8px 18px rgba(235, 87, 105, 0.35), -6px -6px 14px rgba(255, 255, 255, 0.9), inset 3px 3px 6px rgba(255, 255, 255, 0.5);">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </div>
+
+            <h3 class="font-display font-extrabold text-xl text-clay-ink mb-1.5">Hapus Status Kehadiran?</h3>
+            <p id="delete-modal-desc" class="text-xs sm:text-sm text-clay-muted mb-6 leading-relaxed">
+                Status kehadiran peserta ini akan dihapus dan dikembalikan menjadi Belum Hadir.
+            </p>
+
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="closeDeleteConfirmModal()"
+                        class="clay-btn-soft w-1/2 py-3 px-4 font-display font-bold text-xs sm:text-sm text-clay-muted hover:text-clay-ink cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" onclick="confirmDeleteAttendance()"
+                        class="w-1/2 py-3 px-4 rounded-[20px] font-display font-bold text-xs sm:text-sm text-white cursor-pointer transition-transform active:scale-95"
+                        style="background: linear-gradient(145deg, #ff8c9b, #eb5769); box-shadow: 6px 6px 14px rgba(235, 87, 105, 0.35), inset 2px 2px 5px rgba(255,255,255,0.45);">
+                    Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // DATABASE 137 PESERTA (Persebatan Titik.txt)
+        // ==========================================
+        const MASTER_PARTICIPANTS = [
+            { nim: "1", nama: "Leni Marizka" },
+            { nim: "2", nama: "Habibi Qurrotu Aini" },
+            { nim: "3", nama: "Gilang Rafly Hermansyah" },
+            { nim: "4", nama: "Diva Aulia Putri" },
+            { nim: "5", nama: "Abelia Dwi Ariyanto" },
+            { nim: "6", nama: "Alya Mufidah" },
+            { nim: "7", nama: "Diffi Putri Athaya" },
+            { nim: "8", nama: "Aliya Dian Susanti" },
+            { nim: "9", nama: "Afif Ardean" },
+            { nim: "10", nama: "Siti Nur Asmilah" },
+            { nim: "11", nama: "Krisna Gloria Grace Ambarita" },
+            { nim: "12", nama: "Windy Oktavia Nadeak" },
+            { nim: "13", nama: "Rayza Virta Safitri" },
+            { nim: "14", nama: "Syakira Nova Amelya" },
+            { nim: "15", nama: "Naila Sakinah Rendra Putri" },
+            { nim: "16", nama: "Dimas Rolando Jahri Ndruru" },
+            { nim: "17", nama: "Adelia Afrianti" },
+            { nim: "18", nama: "Sekar Dwi Asih" },
+            { nim: "19", nama: "Siska E Pakpahan" },
+            { nim: "20", nama: "Zuhdi Irsadi" },
+            { nim: "21", nama: "Davly Togu Pardamean Simangunsong" },
+            { nim: "22", nama: "Marcelina Claudia Saragih" },
+            { nim: "23", nama: "Achmad Nazaruddin" },
+            { nim: "24", nama: "Mahryza Poetra Permana Billah" },
+            { nim: "25", nama: "Dimas Bagus Noor Abyand" },
+            { nim: "26", nama: "Devina Rahma Saskia" },
+            { nim: "27", nama: "M. Vicky Akbar" },
+            { nim: "28", nama: "Vina Ulandari" },
+            { nim: "29", nama: "Rafika Dian Amandes" },
+            { nim: "30", nama: "Melinda Veronika Manik" },
+            { nim: "31", nama: "Athallah Salman" },
+            { nim: "32", nama: "Sariah Nasari Siallagan" },
+            { nim: "33", nama: "Syifa Al Zahra" },
+            { nim: "34", nama: "Mella Febryana" },
+            { nim: "35", nama: "RIZKI OKTAVIANI" },
+            { nim: "36", nama: "M. Irfan" },
+            { nim: "37", nama: "Henrico Dahlan Simatupang" },
+            { nim: "38", nama: "Noel Christian Desloni. N" },
+            { nim: "39", nama: "Rheifhaldo Firza Navis" },
+            { nim: "40", nama: "Vivi Amelia Agatha" },
+            { nim: "41", nama: "Hilal Maulid Nazardi" },
+            { nim: "42", nama: "Zaki Yusuf Qodrowi" },
+            { nim: "43", nama: "Asham Rahan Zalria" },
+            { nim: "44", nama: "Ajeng Siti Rahayu" },
+            { nim: "45", nama: "Ria Meliyza" },
+            { nim: "46", nama: "Viki Andrean" },
+            { nim: "47", nama: "Diana Warman" },
+            { nim: "48", nama: "Intan Nuraisyah" },
+            { nim: "49", nama: "Bintang Nito Alfath" },
+            { nim: "50", nama: "Hemas Paramesti" },
+            { nim: "51", nama: "Nova Astuti" },
+            { nim: "52", nama: "Florentina Isabelia Tobing" },
+            { nim: "53", nama: "Beckham Assa Marolop Hutabarat" },
+            { nim: "54", nama: "Karisa Zahro" },
+            { nim: "55", nama: "Angel Fathonah" },
+            { nim: "57", nama: "Rahmi Aryati" },
+            { nim: "58", nama: "Lutfi Fadilla" },
+            { nim: "59", nama: "Dinda Nurhayati" },
+            { nim: "60", nama: "M. Daffa Yufrizal" },
+            { nim: "61", nama: "Sulthan Araziq" },
+            { nim: "62", nama: "Anugrah Cahyani" },
+            { nim: "63", nama: "Dion Pratama Simamora" },
+            { nim: "64", nama: "Muhammad Yunus Kifli" },
+            { nim: "65", nama: "Akbar Damara Daffa" },
+            { nim: "66", nama: "Rizka Aulia Septianingrum" },
+            { nim: "67", nama: "Agathis Putra Epriza Oktora" },
+            { nim: "68", nama: "Waja Subisma" },
+            { nim: "69", nama: "Daviya Assyara Lova" },
+            { nim: "70", nama: "Laila Azzahra Putri Ridho" },
+            { nim: "71", nama: "Sakti Artadinata Ramadhan" },
+            { nim: "72", nama: "Fika Armelia" },
+            { nim: "73", nama: "Carolins Agatha Br Simbolon" },
+            { nim: "74", nama: "Rasyfa Muhamad Rafli" },
+            { nim: "75", nama: "Strata Agung Persada M." },
+            { nim: "76", nama: "I Gusti Ayu Windestry Devi" },
+            { nim: "77", nama: "Ahmad Dahlan Juliawan Hasibuan" },
+            { nim: "78", nama: "Muhammad Aziz" },
+            { nim: "79", nama: "Dheya Nabila Meisya Putri" },
+            { nim: "80", nama: "Rizki Maulana" },
+            { nim: "81", nama: "Sasneta Margaretha Sihombing" },
+            { nim: "82", nama: "Yul Dwi Muqarrib" },
+            { nim: "83", nama: "Ridho Naufal Attalla" },
+            { nim: "84", nama: "Paris Simanjuntak" },
+            { nim: "86", nama: "Novita Ariyanti" },
+            { nim: "87", nama: "Ananta Krisnanto" },
+            { nim: "88", nama: "Aldo Priski Sihombing" },
+            { nim: "89", nama: "Zarima Anifah" },
+            { nim: "90", nama: "Alfansa Eka Widyanto" },
+            { nim: "91", nama: "Charlie Elsan Prasetya Hulu" },
+            { nim: "92", nama: "Muslim Riadi" },
+            { nim: "93", nama: "Katharina Listania Putri" },
+            { nim: "95", nama: "Muhammad Daffa" },
+            { nim: "96", nama: "Aditya Prayoga" },
+            { nim: "97", nama: "Dinda Bintang Julytantia" },
+            { nim: "98", nama: "Brayn Fran's Halomoan Simanjuntak" },
+            { nim: "99", nama: "Absalom Elbonardo Cesare Hasugian" },
+            { nim: "100", nama: "Ruben Bahari Tampubolon" },
+            { nim: "101", nama: "Risya Cahya Meivia" },
+            { nim: "102", nama: "M. Raynaldhi Adrico Juniar" },
+            { nim: "104", nama: "Arjun Oppusunggu" },
+            { nim: "105", nama: "Fahri Putra" },
+            { nim: "106", nama: "Serin" },
+            { nim: "107", nama: "Philip Anugrah Alexander" },
+            { nim: "108", nama: "Marchel Ronaldo Simangunsong" },
+            { nim: "109", nama: "Cifli A. Nainggolan" },
+            { nim: "110", nama: "Patricya Lamtio Sari Pratiwi Nasution" },
+            { nim: "111", nama: "Daffa Tsabitah Akbar" },
+            { nim: "112", nama: "Dirga Cahyo" },
+            { nim: "113", nama: "Hafizuddin Ghani Ifkar" },
+            { nim: "114", nama: "Tri Irga Kurniawan. CA" },
+            { nim: "115", nama: "Ammar Abdurrahman" },
+            { nim: "116", nama: "Repiyana Putri Sahera" },
+            { nim: "117", nama: "Hiskia Edwardo Sijabat" },
+            { nim: "118", nama: "Bachtiar Riva" },
+            { nim: "119", nama: "Raditya Viendra" },
+            { nim: "120", nama: "M. Ferdian Yusuf" },
+            { nim: "121", nama: "Marsella Hutagaol" },
+            { nim: "122", nama: "Farel Hamka Aji Pratama" },
+            { nim: "123", nama: "Esra Dormiana Br. Rumapea" },
+            { nim: "124", nama: "Kristian Rio Aritonang" },
+            { nim: "125", nama: "Marcellino Fras Jaya Sianipar" },
+            { nim: "126", nama: "Dimas Miraj Erlangga" },
+            { nim: "128", nama: "Tegar Adi Nugroho" },
+            { nim: "129", nama: "Rian Dearson Simanjuntak" },
+            { nim: "130", nama: "Dessy Amellina Putri" },
+            { nim: "131", nama: "Fran Rikki Sianipar" },
+            { nim: "132", nama: "Yusuf Anaqi" },
+            { nim: "133", nama: "Rasya Risaldo" },
+            { nim: "134", nama: "Syifa Novela Anggraeni" },
+            { nim: "135", nama: "Made Briandhika Julistio" },
+            { nim: "137", nama: "M. Yudha Farrulian AZ" },
+            { nim: "138", nama: "Muhammad Kelvin Dedy Hariyadi" },
+            { nim: "139", nama: "M. Anwar Faiz Absor" },
+            { nim: "140", nama: "Ahmad Pasha Oganta" },
+            { nim: "141", nama: "M. Naufal" },
+            { nim: "142", nama: "Indra Ryan" },
+            { nim: "143", nama: "Fitrah Al Baihaqi" }
+        ];
+
+        // ==========================================
+        // KONFIGURASI & STATE APLIKASI
+        // ==========================================
+        const TOTAL_DURATION_SECONDS = 600; // 10 Menit = 600 detik
+        const STORAGE_SESSION_KEY = 'hadirku_active_session_v1';
+        const STORAGE_RECORDS_KEY = 'hadirku_attendance_records_v1';
+        const syncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('absensi_clay_sync') : null;
+
+        let remainingSeconds = TOTAL_DURATION_SECONDS;
+        let timerInterval = null;
+        let isSessionExpired = false;
+        let currentSessionCode = '';
+        let currentSessionExpiresAt = 0;
+        let currentQrPayloadUrl = '';
+        let qrInstance = null;
+        let activeRekapTab = 'present'; // 'present' atau 'all'
+
+        // State Pemindai Kamera & Koneksi Hasil Scan QR
+        let html5QrScanner = null;
+        let isCameraScanning = false;
+        let scannedQrState = {
+            verified: false,
+            token: '',
+            expiresAt: 0,
+            sessionName: '',
+            source: 'auto' // 'auto', 'url', 'camera', 'image'
+        };
+
+        // State Izin Lokasi & Penghapusan Status Kehadiran
+        let isLocationRequired = true;
+        let userLocationData = {
+            granted: false,
+            lat: null,
+            lng: null,
+            accuracy: null,
+            label: 'Belum terdeteksi'
+        };
+        let pendingDeleteTarget = null; // NIM peserta atau 'ALL'
+
+        // Riwayat kehadiran dimuat dari localStorage agar sinkron lintas-tab
+        let attendanceRecords = [];
+
+        const avatarGradients = [
+            'from-violet-400 to-purple-600',
+            'from-emerald-400 to-teal-600',
+            'from-sky-400 to-blue-600',
+            'from-rose-400 to-pink-600',
+            'from-amber-400 to-orange-500'
+        ];
+
+        // ==========================================
+        // INISIALISASI SAAT HALAMAN DIMUAT
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+
+            // 1. Muat riwayat kehadiran tersimpan
+            loadAttendanceFromStorage();
+
+            // 2. Cek apakah halaman dibuka dari hasil scan QR Code (URLSearchParams)
+            const openedFromQrUrl = handleIncomingQrUrlParams();
+
+            // 3. Sinkronisasi atau generate sesi QR aktif
+            if (!openedFromQrUrl) {
+                const restored = restoreActiveSessionFromStorage();
+                if (!restored) {
+                    generateNewQR(false);
+                }
+            } else {
+                // Pastikan admin panel juga menampilkan sesi yang sedang aktif jika ada
+                restoreActiveSessionFromStorage(true);
+            }
+
+            renderAttendanceList();
+
+            // Listener sinkronisasi real-time antar-tab (BroadcastChannel & Storage Event)
+            setupCrossTabSync();
+
+            document.getElementById('session-select').addEventListener('change', () => {
+                generateNewQR(true);
+                renderAttendanceList();
+            });
+
+            // Tutup dropdown autocomplete saat klik di luar
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('autocomplete-dropdown');
+                const searchInput = document.getElementById('quick-search-participant');
+                if (!dropdown.contains(e.target) && e.target !== searchInput) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Cek status izin lokasi browser secara otomatis jika tersedia
+            checkInitialLocationPermission();
+        });
+
+        // ==========================================
+        // PARSER & KONEKSI QR CODE (URL, KAMERA, GAMBAR, LINTAS-TAB)
+        // ==========================================
+        function buildQrPayloadString(token, expiresAt, reqLoc, sessionName) {
+            try {
+                const loc = window.location;
+                if (loc.protocol === 'http:' || loc.protocol === 'https:') {
+                    const baseUrl = `${loc.origin}${loc.pathname}`;
+                    const params = new URLSearchParams({
+                        qr_token: token,
+                        exp: String(expiresAt),
+                        loc_req: reqLoc ? '1' : '0',
+                        sesi: sessionName
+                    });
+                    return `${baseUrl}?${params.toString()}`;
+                }
+            } catch (e) {
+                // Fallback ke format string terstruktur jika file://
+            }
+            return `ABSENSI|${token}|${expiresAt}|${reqLoc ? '1' : '0'}|${sessionName}`;
+        }
+
+        function parseScannedQrText(rawText) {
+            const text = String(rawText || '').trim();
+            if (!text) return null;
+
+            // Format 1: URL lengkap dengan parameter ?qr_token=...&exp=...
+            try {
+                if (text.startsWith('http://') || text.startsWith('https://') || text.includes('qr_token=')) {
+                    const urlObj = text.startsWith('http')
+                        ? new URL(text)
+                        : new URL(text, window.location.origin);
+                    const token = urlObj.searchParams.get('qr_token');
+                    const exp = Number(urlObj.searchParams.get('exp') || 0);
+                    const locReq = urlObj.searchParams.get('loc_req');
+                    const sesi = urlObj.searchParams.get('sesi') || '';
+                    if (token) {
+                        return {
+                            token: token.toUpperCase(),
+                            expiresAt: exp,
+                            requireLocation: locReq !== '0',
+                            sessionName: sesi
+                        };
+                    }
+                }
+            } catch (e) {
+                // Lanjut cek format berikutnya
+            }
+
+            // Format 2: ABSENSI|TOKEN|EXP|LOC_REQ|SESSION
+            if (text.startsWith('ABSENSI|')) {
+                const parts = text.split('|');
+                if (parts.length >= 3) {
+                    return {
+                        token: parts[1].toUpperCase(),
+                        expiresAt: Number(parts[2] || 0),
+                        requireLocation: parts[3] !== '0',
+                        sessionName: parts[4] || ''
+                    };
+                }
+            }
+
+            // Format 3: JSON lama { code, session, exp }
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed && parsed.code) {
+                    return {
+                        token: String(parsed.code).toUpperCase(),
+                        expiresAt: Number(parsed.exp || 0),
+                        requireLocation: true,
+                        sessionName: parsed.session || ''
+                    };
+                }
+            } catch (e) {
+                // Bukan JSON
+            }
+
+            // Format 4: Token langsung HDR-XXXX
+            if (/^HDR-\d{4}$/i.test(text)) {
+                return {
+                    token: text.toUpperCase(),
+                    expiresAt: currentSessionExpiresAt || (Date.now() + TOTAL_DURATION_SECONDS * 1000),
+                    requireLocation: isLocationRequired,
+                    sessionName: document.getElementById('session-select').value
+                };
+            }
+
+            return null;
+        }
+
+        function handleIncomingQrUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const qrToken = params.get('qr_token');
+            if (!qrToken) return false;
+
+            const exp = Number(params.get('exp') || 0);
+            const locReq = params.get('loc_req') !== '0';
+            const sesi = params.get('sesi') || document.getElementById('session-select').value;
+
+            applyScannedQrConnection({
+                token: qrToken.toUpperCase(),
+                expiresAt: exp,
+                requireLocation: locReq,
+                sessionName: sesi
+            }, 'url');
+
+            // Auto-scroll lembut ke Portal Peserta agar langsung siap mengisi NIM & Nama
+            setTimeout(() => {
+                const formEl = document.getElementById('attendance-form');
+                if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 450);
+
+            return true;
+        }
+
+        function applyScannedQrConnection(parsedQr, source = 'camera') {
+            if (!parsedQr || !parsedQr.token) {
+                showToast('Format QR Code tidak dikenali oleh sistem HadirKu.', 'error');
+                return false;
+            }
+
+            const now = Date.now();
+            const isExpiredScan = parsedQr.expiresAt > 0 && now > parsedQr.expiresAt;
+
+            // Sinkronkan pilihan sesi jika ada pada dropdown
+            if (parsedQr.sessionName) {
+                const selectEl = document.getElementById('session-select');
+                const optionExists = Array.from(selectEl.options).some(opt => opt.value === parsedQr.sessionName);
+                if (optionExists) {
+                    selectEl.value = parsedQr.sessionName;
+                }
+            }
+
+            // Sinkronkan toggle wajib lokasi
+            isLocationRequired = parsedQr.requireLocation;
+            const locToggle = document.getElementById('require-location-toggle');
+            if (locToggle) locToggle.checked = isLocationRequired;
+
+            // Isi otomatis kolom Kode Sesi QR di Portal Peserta
+            document.getElementById('input-code').value = parsedQr.token;
+
+            const badge = document.getElementById('qr-conn-badge');
+            const dot = document.getElementById('qr-conn-dot');
+            const desc = document.getElementById('qr-conn-desc');
+
+            if (isExpiredScan) {
+                scannedQrState = {
+                    verified: false,
+                    token: parsedQr.token,
+                    expiresAt: parsedQr.expiresAt,
+                    sessionName: parsedQr.sessionName,
+                    source
+                };
+
+                badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-rose-50 text-clay-coralDark';
+                badge.textContent = 'QR Kedaluwarsa';
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-coral';
+                desc.innerHTML = `QR Code <strong class="font-mono text-clay-coralDark">${escapeHTML(parsedQr.token)}</strong> sudah melewati batas waktu 10 menit. Silakan scan QR terbaru dari Admin.`;
+                showToast('QR Code yang dipindai sudah kedaluwarsa (>10 menit)!', 'error');
+                return false;
+            }
+
+            scannedQrState = {
+                verified: true,
+                token: parsedQr.token,
+                expiresAt: parsedQr.expiresAt,
+                sessionName: parsedQr.sessionName,
+                source
+            };
+
+            const sourceLabel = source === 'url'
+                ? 'Tautan Scan QR'
+                : source === 'camera'
+                    ? 'Kamera Scanner'
+                    : source === 'image'
+                        ? 'Gambar QR'
+                        : 'Sesi Aktif';
+
+            badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-clay-mintDark';
+            badge.textContent = 'QR Terverifikasi';
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-mint animate-ping';
+            desc.innerHTML = `QR Code Terverifikasi & Terhubung ke Sesi Aktif (<strong class="font-mono text-clay-purpleDark">${escapeHTML(parsedQr.token)}</strong>) via <strong>${sourceLabel}</strong>.`;
+
+            showToast(`QR Code ${parsedQr.token} berhasil terhubung ke absensi!`, 'success');
+            return true;
+        }
+
+        function updateConnectionBannerFromActiveSession() {
+            const badge = document.getElementById('qr-conn-badge');
+            const dot = document.getElementById('qr-conn-dot');
+            const desc = document.getElementById('qr-conn-desc');
+            if (!badge || !desc) return;
+
+            // Jangan timpa jika peserta baru saja memindai QR spesifik yang valid
+            if (scannedQrState.verified && scannedQrState.token === currentSessionCode && !isSessionExpired) {
+                return;
+            }
+
+            if (isSessionExpired) {
+                badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-rose-50 text-clay-coralDark';
+                badge.textContent = 'Sesi Berakhir';
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-coral';
+                desc.innerHTML = `Sesi QR <strong class="font-mono text-clay-coralDark">${escapeHTML(currentSessionCode)}</strong> telah kedaluwarsa. Klik <strong>Generate QR Absensi Baru</strong> pada Panel Admin.`;
+            } else {
+                badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-clay-mintDark';
+                badge.textContent = 'Terhubung Aktif';
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-mint animate-ping';
+                desc.innerHTML = `Terhubung ke sesi QR aktif (<strong class="font-mono text-clay-purpleDark">${escapeHTML(currentSessionCode)}</strong>). Silakan pilih NIM/Nama Anda atau scan QR via kamera.`;
+            }
+        }
+
+        // Pemindai Kamera Langsung (HTML5-QRCode)
+        async function toggleCameraScanner() {
+            const wrapper = document.getElementById('camera-scanner-wrapper');
+            const btnText = document.getElementById('btn-camera-text');
+
+            if (isCameraScanning) {
+                await stopCameraScanner();
+                return;
+            }
+
+            if (typeof Html5Qrcode === 'undefined') {
+                showToast('Library pemindai kamera belum termuat. Gunakan Upload Gambar QR.', 'error');
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            btnText.textContent = 'Tutup Kamera';
+
+            try {
+                html5QrScanner = new Html5Qrcode('qr-reader');
+                isCameraScanning = true;
+
+                await html5QrScanner.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    async (decodedText) => {
+                        const parsed = parseScannedQrText(decodedText);
+                        if (parsed) {
+                            await stopCameraScanner();
+                            applyScannedQrConnection(parsed, 'camera');
+                        }
+                    },
+                    () => {
+                        // Abaikan frame yang belum mendeteksi QR
+                    }
+                );
+            } catch (err) {
+                isCameraScanning = false;
+                wrapper.classList.add('hidden');
+                btnText.textContent = 'Buka Kamera Scan QR';
+                showToast('Akses kamera ditolak atau tidak tersedia. Gunakan "Upload Gambar QR" atau "Uji Link QR".', 'warning');
+            }
+        }
+
+        async function stopCameraScanner() {
+            const wrapper = document.getElementById('camera-scanner-wrapper');
+            const btnText = document.getElementById('btn-camera-text');
+
+            if (html5QrScanner && isCameraScanning) {
+                try {
+                    await html5QrScanner.stop();
+                    html5QrScanner.clear();
+                } catch (e) {
+                    // Abaikan error saat stop
+                }
+            }
+            isCameraScanning = false;
+            wrapper.classList.add('hidden');
+            btnText.textContent = 'Buka Kamera Scan QR';
+        }
+
+        async function handleQrImageUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            if (typeof Html5Qrcode === 'undefined') {
+                showToast('Scanner gambar tidak tersedia.', 'error');
+                return;
+            }
+
+            try {
+                const fileScanner = new Html5Qrcode('qr-file-scanner-hidden');
+                const decodedText = await fileScanner.scanFile(file, true);
+                fileScanner.clear();
+
+                const parsed = parseScannedQrText(decodedText);
+                if (parsed) {
+                    applyScannedQrConnection(parsed, 'image');
+                } else {
+                    showToast('QR Code terbaca, tetapi bukan kode sesi HadirKu yang valid.', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal membaca QR Code dari gambar tersebut. Pastikan gambar QR jelas.', 'error');
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function openQrLinkInNewTab() {
+            if (!currentQrPayloadUrl || !currentQrPayloadUrl.startsWith('http')) {
+                // Simulasikan langsung koneksi via parameter QR jika dibuka dari file://
+                applyScannedQrConnection({
+                    token: currentSessionCode,
+                    expiresAt: currentSessionExpiresAt,
+                    requireLocation: isLocationRequired,
+                    sessionName: document.getElementById('session-select').value
+                }, 'url');
+                return;
+            }
+            window.open(currentQrPayloadUrl, '_blank');
+        }
+
+        // ==========================================
+        // SINKRONISASI LINTAS-TAB & LOCALSTORAGE
+        // ==========================================
+        function saveActiveSessionToStorage() {
+            const payload = {
+                token: currentSessionCode,
+                expiresAt: currentSessionExpiresAt,
+                requireLocation: isLocationRequired,
+                sessionName: document.getElementById('session-select').value
+            };
+            try {
+                localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(payload));
+                if (syncChannel) {
+                    syncChannel.postMessage({ type: 'SESSION_UPDATED', payload });
+                }
+            } catch (e) {
+                // Abaikan jika storage penuh/dibatasi
+            }
+        }
+
+        function restoreActiveSessionFromStorage(keepScannedState = false) {
+            try {
+                const raw = localStorage.getItem(STORAGE_SESSION_KEY);
+                if (!raw) return false;
+                const saved = JSON.parse(raw);
+                if (!saved || !saved.token || !saved.expiresAt) return false;
+
+                const diffSec = Math.floor((saved.expiresAt - Date.now()) / 1000);
+                if (diffSec <= 0) return false;
+
+                renderExistingSessionState(saved, diffSec, keepScannedState);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function saveAttendanceToStorage() {
+            try {
+                localStorage.setItem(STORAGE_RECORDS_KEY, JSON.stringify(attendanceRecords));
+                if (syncChannel) {
+                    syncChannel.postMessage({ type: 'RECORDS_UPDATED', records: attendanceRecords });
+                }
+            } catch (e) {
+                // Abaikan jika storage dibatasi
+            }
+        }
+
+        function loadAttendanceFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_RECORDS_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        attendanceRecords = parsed;
+                    }
+                }
+            } catch (e) {
+                attendanceRecords = [];
+            }
+        }
+
+        function setupCrossTabSync() {
+            if (syncChannel) {
+                syncChannel.onmessage = (event) => {
+                    const msg = event.data;
+                    if (!msg) return;
+
+                    if (msg.type === 'SESSION_UPDATED' && msg.payload) {
+                        const diffSec = Math.max(0, Math.floor((msg.payload.expiresAt - Date.now()) / 1000));
+                        renderExistingSessionState(msg.payload, diffSec, false);
+                    } else if (msg.type === 'RECORDS_UPDATED' && Array.isArray(msg.records)) {
+                        attendanceRecords = msg.records;
+                        renderAttendanceList();
+                    }
+                };
+            }
+
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_SESSION_KEY && e.newValue) {
+                    try {
+                        const saved = JSON.parse(e.newValue);
+                        const diffSec = Math.max(0, Math.floor((saved.expiresAt - Date.now()) / 1000));
+                        renderExistingSessionState(saved, diffSec, false);
+                    } catch (err) {}
+                } else if (e.key === STORAGE_RECORDS_KEY && e.newValue) {
+                    try {
+                        attendanceRecords = JSON.parse(e.newValue);
+                        renderAttendanceList();
+                    } catch (err) {}
+                }
+            });
+        }
+
+        // ==========================================
+        // FITUR IZIN LOKASI GPS (GEOLOCATION API)
+        // ==========================================
+        async function checkInitialLocationPermission() {
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const status = await navigator.permissions.query({ name: 'geolocation' });
+                    if (status.state === 'granted') {
+                        requestUserLocation(true);
+                    }
+                }
+            } catch (e) {
+                // Abaikan jika browser tidak mendukung Permissions API untuk geolocation
+            }
+        }
+
+        function toggleLocationRequirement() {
+            isLocationRequired = document.getElementById('require-location-toggle').checked;
+            const badge = document.getElementById('location-badge');
+            const dot = document.getElementById('location-status-dot');
+
+            if (!isLocationRequired) {
+                if (!userLocationData.granted) {
+                    badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-slate-100 text-clay-muted';
+                    badge.textContent = 'Opsional';
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+                }
+                showToast('Verifikasi lokasi GPS diatur menjadi opsional.', 'purple');
+            } else {
+                if (!userLocationData.granted) {
+                    badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-amber-50 text-amber-700';
+                    badge.textContent = 'Wajib Diizinkan';
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-amber animate-pulse';
+                }
+                showToast('Verifikasi lokasi GPS diwajibkan untuk absensi.', 'success');
+            }
+
+            // Perbarui QR Code & sinkronkan status wajib lokasi ke seluruh tab
+            if (currentSessionCode && !isSessionExpired) {
+                renderQrCodeVisual(currentSessionCode, currentSessionExpiresAt, document.getElementById('session-select').value);
+                saveActiveSessionToStorage();
+            }
+        }
+
+        function requestUserLocation(silent = false) {
+            const btn = document.getElementById('btn-request-location');
+            const badge = document.getElementById('location-badge');
+            const dot = document.getElementById('location-status-dot');
+            const detail = document.getElementById('location-detail-text');
+
+            if (!('geolocation' in navigator)) {
+                if (!silent) showToast('Browser tidak mendukung GPS. Gunakan tombol Simulasi GPS.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>Mendeteksi GPS...</span>`;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(5);
+                    const lng = position.coords.longitude.toFixed(5);
+                    const acc = Math.round(position.coords.accuracy);
+
+                    userLocationData = {
+                        granted: true,
+                        lat,
+                        lng,
+                        accuracy: acc,
+                        label: `${lat}, ${lng} (±${acc}m)`
+                    };
+
+                    badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-clay-mintDark';
+                    badge.textContent = 'Lokasi Terverifikasi';
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-mint';
+                    detail.innerHTML = `Koordinat aktif: <strong class="font-mono text-clay-ink">${lat}, ${lng}</strong> (Akurasi ±${acc} meter)`;
+
+                    btn.disabled = false;
+                    btn.innerHTML = `
+                        <svg class="w-4 h-4 text-clay-mintDark" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Perbarui Lokasi</span>
+                    `;
+
+                    if (!silent) showToast('Izin lokasi berhasil diberikan & koordinat terverifikasi!', 'success');
+                },
+                (error) => {
+                    userLocationData.granted = false;
+                    badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-rose-50 text-clay-coralDark';
+                    badge.textContent = 'Izin Ditolak / Gagal';
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-coral';
+
+                    let msg = 'Izin lokasi ditolak oleh browser.';
+                    if (error.code === error.POSITION_UNAVAILABLE) msg = 'Sinyal lokasi tidak tersedia.';
+                    if (error.code === error.TIMEOUT) msg = 'Waktu permintaan lokasi habis.';
+
+                    detail.textContent = `${msg} Aktifkan izin lokasi di browser atau klik "Simulasi GPS".`;
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Coba Izinkan Lagi</span>`;
+
+                    if (!silent) showToast(msg, 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function simulateMockLocation() {
+            const lat = (-5.39714 + (Math.random() - 0.5) * 0.002).toFixed(5);
+            const lng = (105.26679 + (Math.random() - 0.5) * 0.002).toFixed(5);
+
+            userLocationData = {
+                granted: true,
+                lat,
+                lng,
+                accuracy: 12,
+                label: `${lat}, ${lng} (Simulasi GPS)`
+            };
+
+            const badge = document.getElementById('location-badge');
+            const dot = document.getElementById('location-status-dot');
+            const detail = document.getElementById('location-detail-text');
+
+            badge.className = 'clay-badge px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-clay-mintDark';
+            badge.textContent = 'Lokasi Terverifikasi';
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-clay-mint';
+            detail.innerHTML = `Koordinat Simulasi: <strong class="font-mono text-clay-ink">${lat}, ${lng}</strong> (Area Kampus / Kantor)`;
+
+            showToast('Koordinat lokasi simulasi berhasil diaktifkan!', 'success');
+        }
+
+        // ==========================================
+        // JAM SERVER REAL-TIME
+        // ==========================================
+        function updateLiveClock() {
+            const now = new Date();
+            const formatted = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(/\./g, ':') + ' WIB';
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) clockEl.textContent = formatted;
+        }
+
+        // ==========================================
+        // GENERATOR QR CODE & TIMER 10 MENIT
+        // ==========================================
+        function renderQrCodeVisual(token, expiresAt, sessionName) {
+            currentQrPayloadUrl = buildQrPayloadString(token, expiresAt, isLocationRequired, sessionName);
+            const qrContainer = document.getElementById('qrcode-canvas');
+            qrContainer.innerHTML = '';
+
+            if (typeof QRCode !== 'undefined') {
+                qrInstance = new QRCode(qrContainer, {
+                    text: currentQrPayloadUrl,
+                    width: 156,
+                    height: 156,
+                    colorDark: '#2d354c',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+        }
+
+        function startCountdownLoop() {
+            clearInterval(timerInterval);
+            updateTimerUI();
+            timerInterval = setInterval(() => {
+                remainingSeconds = Math.max(0, Math.floor((currentSessionExpiresAt - Date.now()) / 1000));
+                if (remainingSeconds <= 0) {
+                    remainingSeconds = 0;
+                    clearInterval(timerInterval);
+                    handleSessionExpired();
+                }
+                updateTimerUI();
+            }, 1000);
+        }
+
+        function renderExistingSessionState(sessionObj, diffSeconds, keepScannedState = false) {
+            currentSessionCode = sessionObj.token;
+            currentSessionExpiresAt = sessionObj.expiresAt;
+            remainingSeconds = diffSeconds;
+            isSessionExpired = diffSeconds <= 0;
+
+            if (typeof sessionObj.requireLocation === 'boolean') {
+                isLocationRequired = sessionObj.requireLocation;
+                const toggle = document.getElementById('require-location-toggle');
+                if (toggle) toggle.checked = isLocationRequired;
+            }
+
+            if (sessionObj.sessionName) {
+                const selectEl = document.getElementById('session-select');
+                const exists = Array.from(selectEl.options).some(o => o.value === sessionObj.sessionName);
+                if (exists) selectEl.value = sessionObj.sessionName;
+            }
+
+            document.getElementById('session-code-display').textContent = currentSessionCode;
+            if (!keepScannedState) {
+                document.getElementById('input-code').value = currentSessionCode;
+            }
+
+            const expiryDate = new Date(currentSessionExpiresAt);
+            const expiryStr = expiryDate.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(/\./g, ':');
+            document.getElementById('expiry-clock-info').textContent = `Berakhir pukul ${expiryStr} WIB`;
+
+            renderQrCodeVisual(currentSessionCode, currentSessionExpiresAt, document.getElementById('session-select').value);
+
+            if (isSessionExpired) {
+                handleSessionExpired();
+            } else {
+                document.getElementById('qr-expired-overlay').classList.add('hidden');
+                document.getElementById('qr-scan-line').classList.remove('hidden');
+                document.getElementById('qrcode-canvas').classList.remove('opacity-20', 'blur-sm');
+
+                const statusPill = document.getElementById('qr-status-pill');
+                statusPill.className = 'clay-badge px-3.5 py-1.5 text-xs font-extrabold flex items-center gap-1.5 bg-emerald-50 text-clay-mintDark';
+                statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-clay-mint animate-ping"></span> SESI AKTIF`;
+
+                updateConnectionBannerFromActiveSession();
+                startCountdownLoop();
+            }
+        }
+
+        function generateNewQR(notify = true) {
+            // Reset state waktu 10 menit (600 detik)
+            clearInterval(timerInterval);
+            remainingSeconds = TOTAL_DURATION_SECONDS;
+            isSessionExpired = false;
+
+            // Buat kode sesi acak baru & timestamp kedaluwarsa 10 menit
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            currentSessionCode = `HDR-${randomNum}`;
+            currentSessionExpiresAt = Date.now() + TOTAL_DURATION_SECONDS * 1000;
+
+            const sessionName = document.getElementById('session-select').value;
+            document.getElementById('session-code-display').textContent = currentSessionCode;
+            document.getElementById('input-code').value = currentSessionCode;
+
+            // Reset tampilan overlay kedaluwarsa & status badge
+            document.getElementById('qr-expired-overlay').classList.add('hidden');
+            document.getElementById('qr-scan-line').classList.remove('hidden');
+            document.getElementById('qrcode-canvas').classList.remove('opacity-20', 'blur-sm');
+
+            const statusPill = document.getElementById('qr-status-pill');
+            statusPill.className = 'clay-badge px-3.5 py-1.5 text-xs font-extrabold flex items-center gap-1.5 bg-emerald-50 text-clay-mintDark';
+            statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-clay-mint animate-ping"></span> SESI AKTIF`;
+
+            // Hitung perkiraan waktu berakhir (+10 menit)
+            const expiryDate = new Date(currentSessionExpiresAt);
+            const expiryStr = expiryDate.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(/\./g, ':');
+            document.getElementById('expiry-clock-info').textContent = `Berakhir pukul ${expiryStr} WIB`;
+
+            // Render QR Code dengan URL lengkap + parameter token & expiry
+            renderQrCodeVisual(currentSessionCode, currentSessionExpiresAt, sessionName);
+
+            // Simpan & siarkan sesi aktif ke seluruh tab browser
+            saveActiveSessionToStorage();
+            updateConnectionBannerFromActiveSession();
+            startCountdownLoop();
+
+            if (notify) {
+                showToast(`QR Code baru (${currentSessionCode}) aktif & terhubung selama 10 menit!`, 'success');
+            }
+        }
+
+        function updateTimerUI() {
+            const mins = Math.floor(remainingSeconds / 60);
+            const secs = remainingSeconds % 60;
+            const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            document.getElementById('timer-text').textContent = formattedTime;
+
+            const ratio = remainingSeconds / TOTAL_DURATION_SECONDS;
+            const circumference = 314.16; // 2 * PI * 50
+            const offset = circumference * (1 - ratio);
+
+            const ring = document.getElementById('timer-ring');
+            const bar = document.getElementById('timer-bar');
+            ring.style.strokeDashoffset = offset;
+            bar.style.width = `${ratio * 100}%`;
+
+            // Ubah warna indikator jika sisa waktu < 60 detik
+            if (remainingSeconds <= 60 && remainingSeconds > 0) {
+                ring.setAttribute('stroke', '#ff7a8a');
+                bar.className = 'h-full rounded-full bg-gradient-to-r from-clay-coral to-clay-amber transition-all duration-700';
+            } else if (remainingSeconds === 0) {
+                ring.setAttribute('stroke', '#cbd5e1');
+                bar.className = 'h-full rounded-full bg-slate-300 transition-all duration-700';
+            } else {
+                ring.setAttribute('stroke', '#8b7cf6');
+                bar.className = 'h-full rounded-full bg-gradient-to-r from-clay-purple to-clay-mint transition-all duration-700';
+            }
+        }
+
+        function handleSessionExpired() {
+            isSessionExpired = true;
+            document.getElementById('qr-expired-overlay').classList.remove('hidden');
+            document.getElementById('qr-scan-line').classList.add('hidden');
+            document.getElementById('qrcode-canvas').classList.add('opacity-20', 'blur-sm');
+
+            const statusPill = document.getElementById('qr-status-pill');
+            statusPill.className = 'clay-badge px-3.5 py-1.5 text-xs font-extrabold flex items-center gap-1.5 bg-rose-50 text-clay-coralDark';
+            statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-clay-coral"></span> KEDALUWARSA`;
+
+            updateConnectionBannerFromActiveSession();
+            showToast('Waktu 10 menit telah habis! Silakan generate QR baru.', 'warning');
+        }
+
+        function simulateFastExpire() {
+            if (isSessionExpired) {
+                showToast('QR sudah kedaluwarsa. Klik Generate QR Baru untuk menguji lagi.', 'warning');
+                return;
+            }
+            remainingSeconds = 5;
+            currentSessionExpiresAt = Date.now() + 5000;
+            renderQrCodeVisual(currentSessionCode, currentSessionExpiresAt, document.getElementById('session-select').value);
+            saveActiveSessionToStorage();
+            updateTimerUI();
+            showToast('Mode uji aktif: sisa waktu dipercepat menjadi 5 detik!', 'purple');
+        }
+
+        function copySessionCode() {
+            const tempInput = document.createElement('input');
+            tempInput.value = currentSessionCode;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast(`Kode sesi "${currentSessionCode}" disalin ke clipboard!`, 'purple');
+        }
+
+        // ==========================================
+        // PENCARIAN CEPAT & AUTOCOMPLETE 137 PESERTA
+        // ==========================================
+        function handleParticipantAutocomplete(query) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const clearBtn = document.getElementById('clear-search-btn');
+            const trimmed = query.trim().toLowerCase();
+
+            if (trimmed.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matches = MASTER_PARTICIPANTS.filter(p =>
+                p.nim.toLowerCase() === trimmed ||
+                p.nim.toLowerCase().includes(trimmed) ||
+                p.nama.toLowerCase().includes(trimmed)
+            ).slice(0, 15);
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = `<div class="px-3 py-2.5 text-xs font-semibold text-clay-muted text-center">Tidak ditemukan peserta dengan kata kunci "${escapeHTML(query)}"</div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            const currentSession = document.getElementById('session-select').value;
+            dropdown.innerHTML = matches.map(p => {
+                const alreadyPresent = attendanceRecords.some(r => r.id.toLowerCase() === p.nim.toLowerCase() && r.session === currentSession);
+                return `
+                    <button type="button" onclick="selectMasterParticipant('${p.nim}')"
+                            class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-white/90 transition-colors flex items-center justify-between gap-2 cursor-pointer">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-extrabold bg-indigo-100/80 text-clay-purpleDark shrink-0">NIM ${escapeHTML(p.nim)}</span>
+                            <span class="text-xs sm:text-sm font-bold text-clay-ink truncate">${escapeHTML(p.nama)}</span>
+                        </div>
+                        ${alreadyPresent
+                            ? '<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-clay-mintDark shrink-0">Sudah Hadir</span>'
+                            : '<span class="text-[10px] font-bold text-clay-muted shrink-0">Pilih</span>'
+                        }
+                    </button>
+                `;
+            }).join('');
+
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectMasterParticipant(nim) {
+            const found = MASTER_PARTICIPANTS.find(p => p.nim === String(nim));
+            if (!found) return;
+
+            document.getElementById('input-id').value = found.nim;
+            document.getElementById('input-name').value = found.nama;
+            document.getElementById('quick-search-participant').value = `${found.nim} - ${found.nama}`;
+            document.getElementById('clear-search-btn').classList.remove('hidden');
+            document.getElementById('autocomplete-dropdown').classList.add('hidden');
+            document.getElementById('nim-match-indicator').classList.remove('hidden');
+
+            if (scannedQrState.verified && scannedQrState.token) {
+                document.getElementById('input-code').value = scannedQrState.token;
+            } else if (!isSessionExpired) {
+                document.getElementById('input-code').value = currentSessionCode;
+            }
+        }
+
+        function syncNameByNim(nimVal) {
+            const clean = nimVal.trim();
+            const indicator = document.getElementById('nim-match-indicator');
+            const found = MASTER_PARTICIPANTS.find(p => p.nim === clean);
+            if (found) {
+                document.getElementById('input-name').value = found.nama;
+                indicator.classList.remove('hidden');
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
+
+        function clearParticipantSearch() {
+            document.getElementById('quick-search-participant').value = '';
+            document.getElementById('input-id').value = '';
+            document.getElementById('input-name').value = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            document.getElementById('autocomplete-dropdown').classList.add('hidden');
+            document.getElementById('nim-match-indicator').classList.add('hidden');
+        }
+
+        function pickRandomParticipant() {
+            const currentSession = document.getElementById('session-select').value;
+            const notPresentYet = MASTER_PARTICIPANTS.filter(
+                p => !attendanceRecords.some(r => r.id.toLowerCase() === p.nim.toLowerCase() && r.session === currentSession)
+            );
+            const pool = notPresentYet.length > 0 ? notPresentYet : MASTER_PARTICIPANTS;
+            const randomItem = pool[Math.floor(Math.random() * pool.length)];
+            selectMasterParticipant(randomItem.nim);
+            showToast(`Peserta terpilih: NIM ${randomItem.nim} — ${randomItem.nama}`, 'purple');
+        }
+
+        // ==========================================
+        // PROSES SUBMIT & VALIDASI ABSENSI
+        // ==========================================
+        function handleAttendanceSubmit(event) {
+            event.preventDefault();
+
+            const idInput = document.getElementById('input-id').value.trim();
+            const nameInput = document.getElementById('input-name').value.trim();
+            const codeInput = document.getElementById('input-code').value.trim().toUpperCase();
+            const sessionName = document.getElementById('session-select').value;
+
+            if (!idInput || !nameInput) {
+                showToast('Mohon lengkapi NIM dan Nama Lengkap peserta.', 'error');
+                return;
+            }
+
+            // Cek apakah peserta terhubung melalui hasil scan QR (URL / Kamera / Gambar) atau sesi aktif langsung
+            const hasVerifiedScannedToken = scannedQrState.verified && scannedQrState.token === codeInput;
+            const activeExpiryTimestamp = hasVerifiedScannedToken && scannedQrState.expiresAt > 0
+                ? scannedQrState.expiresAt
+                : currentSessionExpiresAt;
+
+            // 1. Validasi Waktu 10 Menit
+            if ((activeExpiryTimestamp > 0 && Date.now() > activeExpiryTimestamp) || (!hasVerifiedScannedToken && (isSessionExpired || remainingSeconds <= 0))) {
+                showToast('Gagal Absen: Barcode sudah kedaluwarsa (>10 menit). Minta admin generate QR baru!', 'error');
+                return;
+            }
+
+            // 2. Validasi Izin Lokasi GPS (jika diwajibkan)
+            if (isLocationRequired && !userLocationData.granted) {
+                showToast('Izin lokasi wajib diaktifkan! Klik "Izinkan & Deteksi Lokasi" terlebih dahulu.', 'error');
+                document.getElementById('participant-location-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // 3. Validasi Kecocokan Kode Sesi QR
+            const isValidToken = hasVerifiedScannedToken || (codeInput === currentSessionCode);
+            if (!isValidToken) {
+                showToast(`Kode sesi "${codeInput}" tidak cocok dengan QR aktif (${currentSessionCode})!`, 'error');
+                return;
+            }
+
+            // 4. Validasi Duplikasi NIM/ID pada sesi yang sama
+            const duplicate = attendanceRecords.some(
+                r => r.id.toLowerCase() === idInput.toLowerCase() && r.session === sessionName
+            );
+            if (duplicate) {
+                showToast(`NIM ${idInput} (${nameInput}) sudah tercatat hadir pada sesi ini!`, 'warning');
+                return;
+            }
+
+            const now = new Date();
+            const timeFormatted = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(/\./g, ':') + ' WIB';
+
+            const locationSummary = userLocationData.granted
+                ? userLocationData.label
+                : 'Lokasi tidak disertakan (Opsional)';
+
+            const newRecord = {
+                id: idInput,
+                name: nameInput,
+                session: sessionName,
+                code: codeInput,
+                time: timeFormatted,
+                location: locationSummary,
+                gradient: avatarGradients[Math.floor(Math.random() * avatarGradients.length)]
+            };
+
+            // Tambahkan ke paling atas daftar & sinkronkan ke localStorage / tab lain
+            attendanceRecords.unshift(newRecord);
+            saveAttendanceToStorage();
+            renderAttendanceList();
+
+            // Bersihkan form peserta
+            clearParticipantSearch();
+
+            // Tampilkan Animasi Sukses & Efek Suara
+            playSuccessChime();
+            triggerSuccessModal(newRecord);
+        }
+
+        // ==========================================
+        // ANIMASI SUKSES (MODAL CLAY + CONFETTI + TONE.JS)
+        // ==========================================
+        function triggerSuccessModal(record) {
+            document.getElementById('receipt-name').textContent = record.name;
+            document.getElementById('receipt-id').textContent = `NIM ${record.id}`;
+            document.getElementById('receipt-session').textContent = record.session;
+            document.getElementById('receipt-time').textContent = record.time;
+            document.getElementById('receipt-location').textContent = record.location;
+
+            const modal = document.getElementById('success-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 70,
+                    spread: 75,
+                    origin: { y: 0.58 },
+                    colors: ['#8b7cf6', '#38d39f', '#ff7a8a', '#56b4f9', '#ffb84d']
+                });
+            }
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('success-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function playSuccessChime() {
+            try {
+                if (typeof Tone !== 'undefined') {
+                    await Tone.start();
+                    const synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.02, decay: 0.25, sustain: 0.1, release: 0.6 }
+                    }).toDestination();
+                    const now = Tone.now();
+                    synth.triggerAttackRelease('C5', '16n', now);
+                    synth.triggerAttackRelease('E5', '16n', now + 0.09);
+                    synth.triggerAttackRelease('G5', '8n', now + 0.18);
+                }
+            } catch (e) {
+                // Abaikan jika audio diblokir oleh kebijakan autoplay browser
+            }
+        }
+
+        // ==========================================
+        // HAPUS STATUS KEHADIRAN (PER PESERTA & RESET SESI)
+        // ==========================================
+        function openDeleteConfirmModal(targetNim) {
+            const currentSession = document.getElementById('session-select').value;
+            pendingDeleteTarget = targetNim;
+
+            const descEl = document.getElementById('delete-modal-desc');
+            if (targetNim === 'ALL') {
+                const sessionCount = attendanceRecords.filter(r => r.session === currentSession).length;
+                if (sessionCount === 0) {
+                    showToast('Belum ada data kehadiran pada sesi ini untuk direset.', 'warning');
+                    return;
+                }
+                descEl.innerHTML = `Seluruh <strong>${sessionCount} data kehadiran</strong> pada sesi <strong>${escapeHTML(currentSession)}</strong> akan dihapus dan dikembalikan menjadi Belum Hadir.`;
+            } else {
+                const rec = attendanceRecords.find(r => r.id === String(targetNim) && r.session === currentSession);
+                const nama = rec ? rec.name : `NIM ${targetNim}`;
+                descEl.innerHTML = `Status kehadiran <strong>${escapeHTML(nama)} (NIM ${escapeHTML(String(targetNim))})</strong> akan dihapus dan dikembalikan menjadi Belum Hadir.`;
+            }
+
+            const modal = document.getElementById('delete-confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteConfirmModal() {
+            pendingDeleteTarget = null;
+            const modal = document.getElementById('delete-confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmDeleteAttendance() {
+            if (!pendingDeleteTarget) return;
+            const currentSession = document.getElementById('session-select').value;
+
+            if (pendingDeleteTarget === 'ALL') {
+                attendanceRecords = attendanceRecords.filter(r => r.session !== currentSession);
+                showToast('Seluruh status kehadiran sesi aktif berhasil direset.', 'purple');
+            } else {
+                const targetStr = String(pendingDeleteTarget);
+                attendanceRecords = attendanceRecords.filter(
+                    r => !(r.id === targetStr && r.session === currentSession)
+                );
+                showToast(`Status kehadiran NIM ${targetStr} berhasil dihapus.`, 'warning');
+            }
+
+            closeDeleteConfirmModal();
+            saveAttendanceToStorage();
+            renderAttendanceList();
+        }
+
+        // ==========================================
+        // REKAPITULASI 137 PESERTA, TAB & EXPORT CSV
+        // ==========================================
+        function switchRekapTab(tab) {
+            activeRekapTab = tab;
+            const tabPresent = document.getElementById('tab-present');
+            const tabAll = document.getElementById('tab-all');
+
+            if (tab === 'present') {
+                tabPresent.className = 'px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-white text-clay-purpleDark shadow-sm cursor-pointer';
+                tabAll.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold text-clay-muted hover:text-clay-ink transition-all cursor-pointer';
+            } else {
+                tabAll.className = 'px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-white text-clay-purpleDark shadow-sm cursor-pointer';
+                tabPresent.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold text-clay-muted hover:text-clay-ink transition-all cursor-pointer';
+            }
+            renderAttendanceList();
+        }
+
+        function renderAttendanceList() {
+            const listContainer = document.getElementById('attendance-list');
+            const searchQuery = document.getElementById('search-log').value.trim().toLowerCase();
+            const currentSession = document.getElementById('session-select').value;
+
+            const sessionRecords = attendanceRecords.filter(r => r.session === currentSession);
+            const totalMaster = MASTER_PARTICIPANTS.length;
+            const presentCount = sessionRecords.length;
+            const pct = totalMaster > 0 ? Math.round((presentCount / totalMaster) * 100) : 0;
+
+            // Update statistik header & progress bar
+            document.getElementById('header-total-count').textContent = presentCount;
+            document.getElementById('header-total-subtitle').textContent = `${presentCount} / ${totalMaster} Peserta`;
+            document.getElementById('badge-count').textContent = `${presentCount} / ${totalMaster} Hadir (${pct}%)`;
+            document.getElementById('tab-present-count').textContent = presentCount;
+            document.getElementById('attendance-percentage-label').textContent = `${pct}% (${presentCount} dari ${totalMaster} Peserta)`;
+            document.getElementById('attendance-progress-bar').style.width = `${pct}%`;
+
+            if (activeRekapTab === 'present') {
+                const filtered = sessionRecords.filter(r =>
+                    r.name.toLowerCase().includes(searchQuery) ||
+                    r.id.toLowerCase().includes(searchQuery)
+                );
+
+                if (filtered.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="col-span-full clay-panel p-8 text-center">
+                            <p class="font-display font-bold text-sm text-clay-ink mb-1">Belum Ada Peserta yang Hadir</p>
+                            <p class="text-xs text-clay-muted">Silakan pilih NIM/Nama pada Portal Peserta atau buka tab <strong>Semua Peserta (137)</strong> untuk melihat seluruh daftar.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listContainer.innerHTML = filtered.map((rec, idx) => {
+                    const initials = getInitials(rec.name);
+                    return `
+                        <div class="clay-panel p-4 flex items-center justify-between gap-3 ${idx === 0 ? 'animate-row-in' : ''}">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br ${rec.gradient} text-white font-display font-extrabold text-sm flex items-center justify-center shrink-0 shadow-md">
+                                    ${escapeHTML(initials)}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-extrabold bg-indigo-100/80 text-clay-purpleDark">NIM ${escapeHTML(rec.id)}</span>
+                                        <span class="text-[11px] font-bold text-clay-mintDark">${escapeHTML(rec.time)}</span>
+                                    </div>
+                                    <p class="font-display font-bold text-sm text-clay-ink truncate mt-0.5">${escapeHTML(rec.name)}</p>
+                                    <p class="text-[11px] text-clay-muted truncate mt-0.5" title="${escapeHTML(rec.location)}">📍 ${escapeHTML(rec.location)}</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openDeleteConfirmModal('${escapeHTML(rec.id)}')" title="Hapus status kehadiran peserta ini"
+                                    class="clay-btn-soft w-9 h-9 rounded-xl flex items-center justify-center text-clay-muted hover:text-clay-coralDark shrink-0 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Tab Semua Peserta (137)
+                const filteredMaster = MASTER_PARTICIPANTS.filter(p =>
+                    p.nama.toLowerCase().includes(searchQuery) ||
+                    p.nim.toLowerCase().includes(searchQuery)
+                );
+
+                listContainer.innerHTML = filteredMaster.map(p => {
+                    const rec = sessionRecords.find(r => r.id.toLowerCase() === p.nim.toLowerCase());
+                    return `
+                        <div class="clay-panel p-3.5 flex items-center justify-between gap-2.5">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-extrabold bg-slate-200/80 text-clay-ink">NIM ${escapeHTML(p.nim)}</span>
+                                    ${rec
+                                        ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-clay-mintDark">Hadir • ${escapeHTML(rec.time)}</span>`
+                                        : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200/70 text-clay-muted">Belum Hadir</span>`
+                                    }
+                                </div>
+                                <p class="font-display font-bold text-xs sm:text-sm text-clay-ink truncate mt-1">${escapeHTML(p.nama)}</p>
+                            </div>
+                            ${rec
+                                ? `<button type="button" onclick="openDeleteConfirmModal('${escapeHTML(p.nim)}')" title="Batalkan kehadiran"
+                                           class="clay-btn-soft w-8 h-8 rounded-xl flex items-center justify-center text-clay-coralDark shrink-0 cursor-pointer font-bold text-sm">×</button>`
+                                : `<button type="button" onclick="quickFillAndScroll('${escapeHTML(p.nim)}')"
+                                           class="clay-btn-soft px-2.5 py-1.5 text-[11px] font-extrabold text-clay-purpleDark shrink-0 cursor-pointer">Isi Form</button>`
+                            }
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function quickFillAndScroll(nim) {
+            selectMasterParticipant(nim);
+            const formEl = document.getElementById('attendance-form');
+            if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`Data NIM ${nim} diisikan ke form absensi.`, 'purple');
+        }
+
+        function exportAttendanceCSV() {
+            const currentSession = document.getElementById('session-select').value;
+            const sessionRecords = attendanceRecords.filter(r => r.session === currentSession);
+
+            let csv = 'NIM,Nama Peserta,Sesi,Status Kehadiran,Waktu Scan,Kode QR,Lokasi GPS\n';
+            MASTER_PARTICIPANTS.forEach(p => {
+                const rec = sessionRecords.find(r => r.id.toLowerCase() === p.nim.toLowerCase());
+                const status = rec ? 'Hadir' : 'Belum Hadir';
+                const waktu = rec ? rec.time : '-';
+                const kode = rec ? rec.code : '-';
+                const lokasi = rec ? `"${rec.location.replace(/"/g, '""')}"` : '-';
+                csv += `"${p.nim}","${p.nama.replace(/"/g, '""')}","${currentSession.replace(/"/g, '""')}","${status}","${waktu}","${kode}",${lokasi}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Rekap_Absensi_${currentSession.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('File CSV rekapitulasi 137 peserta berhasil diunduh!', 'success');
+        }
+
+        // ==========================================
+        // UTILITAS TOAST & HELPER
+        // ==========================================
+        function showToast(message, type = 'purple') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const badgeColors = {
+                success: 'bg-clay-mint text-white',
+                error: 'bg-clay-coral text-white',
+                warning: 'bg-clay-amber text-white',
+                purple: 'bg-clay-purple text-white'
+            };
+
+            toast.className = 'pointer-events-auto clay-card px-4 py-3.5 flex items-center gap-3 animate-clay-pop';
+            toast.innerHTML = `
+                <span class="w-7 h-7 rounded-xl ${badgeColors[type] || badgeColors.purple} flex items-center justify-center shrink-0 font-extrabold text-xs shadow-sm">
+                    ${type === 'success' ? '✓' : type === 'error' ? '!' : type === 'warning' ? '⚠' : '★'}
+                </span>
+                <p class="text-xs font-bold text-clay-ink leading-snug">${escapeHTML(message)}</p>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3400);
+        }
+
+        function getInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
